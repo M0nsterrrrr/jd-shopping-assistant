@@ -1,0 +1,362 @@
+/* 主面板样式 */
+.jd-assistant-panel {
+  position: fixed;
+  top: 20%;
+  right: 0;
+  width: 320px;
+  max-height: 600px;
+  background-color: #fff;
+  border-radius: 8px 0 0 8px;
+  box-shadow: -2px 2px 10px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+.jd-assistant-panel.panel-hidden {
+  transform: translateX(100%);
+}
+
+/* 面板头部 */
+.panel-header {
+  background-color: #e2231a;
+  color: white;
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.panel-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 面板内容 */
+.panel-content {
+  padding: 15px;
+  overflow-y: auto;
+  max-height: 520px;
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 0;
+}
+
+.loading-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #e2231a;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 错误状态 */
+.error {
+  color: #ff4d4f;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* 各部分样式 */
+.panel-section {
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+}
+
+.panel-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.panel-section h4 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+/* 智能对话 */
+#jd-assistant-chat-section {
+  margin-top: 20px;
+  border-top: 1px solid #eee;
+  padding-top: 15px;
+}
+
+#chat-messages-container {
+  height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  padding: 10px;
+  margin-bottom: 10px;
+  background-color: #fff;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-message {
+  padding: 8px 12px;
+  border-radius: 15px;
+  margin-bottom: 8px;
+  max-width: 80%;
+  word-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.bot-message {
+  background-color: #e9e9eb;
+  color: #333;
+  align-self: flex-start;
+  margin-right: auto;
+  border-bottom-left-radius: 2px;
+}
+
+.user-message {
+  background-color: #d9534f;
+  color: white;
+  align-self: flex-end;
+  margin-left: auto;
+  border-bottom-right-radius: 2px;
+}
+
+#chat-input-container {
+  display: flex;
+  align-items: center;
+}
+
+#chat-input {
+  flex-grow: 1;
+  margin-right: 10px;
+  margin-bottom: 0;
+  height: 40px;
+  resize: none;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+#send-chat-button {
+  padding: 8px 12px;
+  white-space: nowrap;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+#send-chat-button:hover {
+  background-color: #c0392b;
+}
+
+/* 滚动条美化 */
+#chat-messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+#chat-messages-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+#chat-messages-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+#chat-messages-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 价格趋势 */
+.price-trend {
+  display: flex;
+  flex-direction: column;
+}
+
+.price-chart {
+  height: 120px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+
+.price-summary p {
+  margin: 5px 0;
+  font-size: 13px;
+}
+
+.price-recommendation {
+  color: #e2231a;
+  font-weight: 600;
+  margin-top: 10px !important;
+}
+
+/* 评论分析 */
+.review-analysis {
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.review-score {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+/* 卖家评估 */
+.seller-analysis {
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.risk-level {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.risk-level.low {
+  background-color: #52c41a;
+  color: white;
+}
+
+.risk-level.medium {
+  background-color: #faad14;
+  color: white;
+}
+
+.risk-level.high {
+  background-color: #ff4d4f;
+  color: white;
+}
+
+/* 比价推荐 */
+.alternatives-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.alternative-product {
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  padding: 8px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.alternative-product:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.alternative-product img {
+  width: 100%;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 6px;
+}
+
+.alt-title {
+  font-size: 12px;
+  color: #333;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.alt-price {
+  font-size: 14px;
+  color: #e2231a;
+  font-weight: 600;
+}
+
+/* 底部区域 */
+.panel-footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.source-button {
+  background-color: #f5f5f5;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  padding: 6px 15px;
+  color: #666;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.source-button:hover {
+  background-color: #e2231a;
+  color: white;
+  border-color: #e2231a;
+}
+
+/* 悬浮按钮 */
+.jd-assistant-button {
+  position: fixed;
+  bottom: 120px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  background-color: #e2231a;
+  border-radius: 50%;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 9998;
+  color: white;
+  transition: transform 0.2s;
+}
+
+.jd-assistant-button:hover {
+  transform: scale(1.1);
+}
+
+.button-icon {
+  font-weight: bold;
+  font-size: 18px;
+} 

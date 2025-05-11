@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>京东智能购物助手</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container" style="display: block !important; visibility: visible !important;">
+    <header class="header">
+      <h1>京东智能购物助手</h1>
+      <div class="status">
+        <div id="statusIndicator" class="status-indicator offline"></div>
+        <span id="statusText">离线模式</span>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="section" id="productSection">
+        <h2>商品信息</h2>
+        <div id="productInfo" class="info-card">
+          <p>请访问京东商品页面以获取分析</p>
+        </div>
+      </div>
+
+      <div class="section" id="priceSection">
+        <h2>价格历史分析</h2>
+        <div id="priceAnalysis" class="info-card">
+          <div id="priceChart" class="chart-container">暂无数据</div>
+          <div id="priceSummary" class="summary"></div>
+        </div>
+      </div>
+
+      <div class="section" id="reviewSection">
+        <h2>评论真实性检测</h2>
+        <div id="reviewAnalysis" class="info-card">
+          <div id="reviewScore" class="score">-</div>
+          <div id="reviewSummary" class="summary">暂无评论数据</div>
+        </div>
+      </div>
+
+      <div class="section" id="sellerSection">
+        <h2>卖家信誉评估</h2>
+        <div id="sellerAnalysis" class="info-card">
+          <div id="sellerScore" class="score">-</div>
+          <div id="sellerSummary" class="summary">暂无卖家数据</div>
+        </div>
+      </div>
+
+      <div class="section" id="comparisonSection">
+        <h2>比价推荐</h2>
+        <div id="comparisonAnalysis" class="info-card">
+          <div id="alternativeProducts" class="products-grid">暂无可比价商品</div>
+        </div>
+      </div>
+
+      <div class="section" id="chatSection">
+        <h2>智能对话</h2>
+        <div id="chatHistory" class="info-card"></div>
+        <div style="display:flex;gap:8px;">
+          <input id="chatInput" type="text" placeholder="请输入您的问题..." style="flex:1;">
+          <button id="chatSendBtn" class="btn" style="min-width:60px;">发送</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <button id="sourceButton" class="btn">决策溯源</button>
+      <div class="info">
+        <span>数据更新于: <span id="updateTime">-</span></span>
+      </div>
+    </footer>
+  </div>
+  <!-- <script type="module" src="popup.js"></script> -->
+  <script src="popup.js"></script>
+</body>
+</html>

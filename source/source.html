@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>京东智能购物助手 - 决策溯源</title>
+  <link rel="stylesheet" href="source.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>决策溯源</h1>
+      <div class="product-info" id="productInfo">
+        <div class="product-title" id="productTitle">加载商品信息...</div>
+        <div class="product-meta" id="productMeta"></div>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="loading-container" id="loadingContainer">
+        <div class="loading-spinner"></div>
+        <p>正在获取决策溯源数据...</p>
+      </div>
+
+      <div class="error-container" id="errorContainer" style="display: none;">
+        <p class="error-message" id="errorMessage"></p>
+        <button class="retry-button" id="retryButton">重试</button>
+      </div>
+
+      <div class="source-container" id="sourceContainer" style="display: none;">
+        <!-- 价格分析溯源 -->
+        <div class="source-section">
+          <h2>价格分析依据</h2>
+          <div class="source-content" id="priceSourceContent">
+            <div class="analysis-chart" id="priceChart"></div>
+            <div class="analysis-explanation">
+              <h3>分析方法</h3>
+              <div id="priceMethodology"></div>
+              <h3>数据来源</h3>
+              <div id="priceDataSource"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 评论分析溯源 -->
+        <div class="source-section">
+          <h2>评论真实性分析依据</h2>
+          <div class="source-content" id="reviewSourceContent">
+            <div class="analysis-explanation">
+              <h3>分析方法</h3>
+              <div id="reviewMethodology"></div>
+              <h3>关键词</h3>
+              <div id="reviewKeywords"></div>
+              <h3>可疑评论示例</h3>
+              <div id="reviewExamples"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 卖家分析溯源 -->
+        <div class="source-section">
+          <h2>卖家信誉评估依据</h2>
+          <div class="source-content" id="sellerSourceContent">
+            <div class="analysis-explanation">
+              <h3>分析方法</h3>
+              <div id="sellerMethodology"></div>
+              <h3>历史数据</h3>
+              <div id="sellerHistory"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 原始数据 -->
+        <div class="source-section">
+          <h2>决策数据</h2>
+          <div class="raw-data">
+            <pre id="rawData"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="timestamp">
+        分析时间: <span id="analysisTime">-</span>
+      </div>
+      <div class="actions">
+        <button id="exportButton">导出报告</button>
+        <button id="closeButton">关闭</button>
+      </div>
+    </footer>
+  </div>
+
+  <script src="source.js"></script>
+</body>
+</html> 
