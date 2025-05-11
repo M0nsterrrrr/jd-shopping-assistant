@@ -6,6 +6,7 @@
 // 导入API模块
 import { analyzeProduct, getAnalysisSource, setApiConfig } from '../utils/api.js';
 import { sendChatMessage } from '../utils/api.js';
+import { getConfig } from '../config.js';
 
 // 存储商品分析数据的缓存
 const productCache = new Map();
@@ -14,15 +15,24 @@ const productCache = new Map();
 const initializeExtension = async () => {
   console.log('京东智能购物助手 - 正在初始化...');
   
-  // 从storage中加载API配置
   try {
-    const { apiConfig } = await chrome.storage.local.get('apiConfig');
-    if (apiConfig) {
-      setApiConfig(apiConfig);
-      console.log('已加载API配置');
-    }
+    // 从.env文件加载配置
+    const config = await getConfig();
+    setApiConfig(config);
+    console.log('已从.env文件加载API配置');
   } catch (error) {
-    console.error('加载API配置失败:', error);
+    console.error('从.env加载API配置失败:', error);
+    
+    // 如果.env加载失败，尝试从storage中加载
+    try {
+      const { apiConfig } = await chrome.storage.local.get('apiConfig');
+      if (apiConfig) {
+        setApiConfig(apiConfig);
+        console.log('已从storage加载API配置');
+      }
+    } catch (storageError) {
+      console.error('从storage加载API配置失败:', storageError);
+    }
   }
   
   // 显示欢迎通知

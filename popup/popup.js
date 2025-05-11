@@ -1,8 +1,12 @@
 // ========== API配置 ==========
+import { getConfig } from '../config.js';
+import { sendChatMessage, setApiConfig } from '../utils/api.js';
+
+// 在初始化完成前使用临时配置
 const DEFAULT_CONFIG = {
   apiUrl: 'https://openrouter.ai/api/v1/chat/completions',
-  model: 'qwen/qwen3-4b:free',
-  apiKey: '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',
+  model: 'qwen/qwen3-30b-a3b:free',
+  apiKey: '', // 初始为空，将从.env文件中加载
   timeout: 20000,
   headers: {
     'Content-Type': 'application/json',
@@ -12,6 +16,22 @@ const DEFAULT_CONFIG = {
 
 // 存储API配置
 let apiConfig = { ...DEFAULT_CONFIG };
+
+// 初始化配置
+const initConfig = async () => {
+  try {
+    const config = await getConfig();
+    apiConfig = { ...config };
+    // 更新utils/api.js中的配置
+    setApiConfig(apiConfig);
+    console.log('配置已从.env文件加载');
+  } catch (error) {
+    console.error('加载配置失败:', error);
+  }
+};
+
+// 确保配置加载完成
+initConfig();
 
 /**
  * 带超时的fetch
@@ -39,58 +59,6 @@ const fetchWithTimeout = (url, options, timeout) => {
       setTimeout(() => reject(new Error('请求超时')), timeout)
     )
   ]);
-};
-
-/**
- * 处理聊天消息的发送和接收
- * @param {string} userMessage - 用户发送的消息
- * @returns {Promise} 返回聊天回复
- */
-const sendChatMessage = async (userMessage) => {
-  try {
-    const response = await fetchWithTimeout(
-      apiConfig.apiUrl,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          model: apiConfig.model,
-          messages: [
-            {
-              role: 'system',
-              content: '你是一个乐于助人的京东购物助手。'
-            },
-            {
-              role: 'user',
-              content: userMessage
-            }
-          ],
-          temperature: 0.7,
-        })
-      },
-      apiConfig.timeout
-    );
-
-    if (!response.ok) {
-      const errorData = await response.text();
-      throw new Error(`API请求失败: ${response.status} ${response.statusText} - ${errorData}`);
-    }
-    
-    const data = await response.json();
-    
-    if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
-      return { success: true, answer: data.choices[0].message.content };
-    } else {
-      throw new Error('API响应格式不正确或内容为空');
-    }
-
-  } catch (error) {
-    console.error('发送聊天消息失败:', error);
-    return {
-      success: false,
-      error: error.message || '请求失败',
-      answer: '抱歉，我暂时无法回复。'
-    };
-  }
 };
 
 // 初始化 UI 函数

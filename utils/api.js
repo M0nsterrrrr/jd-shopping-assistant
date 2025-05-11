@@ -6,7 +6,7 @@
 const DEFAULT_CONFIG = {
   apiUrl: 'https://openrouter.ai/api/v1/chat/completions', // 替换为实际的API地址
   model: 'qwen/qwen3-4b:free',
-  apiKey: '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', // 替换为实际的API密钥
+  apiKey: '', // 初始为空，将从.env文件中加载
   timeout: 20000, // 20秒超时
   headers: {
     'Content-Type': 'application/json',
@@ -138,6 +138,11 @@ export const getAnalysisSource = async (productId) => {
  */
 export const sendChatMessage = async (userMessage) => {
   try {
+    // 如果API密钥为空，报告错误
+    if (!apiConfig.apiKey) {
+      throw new Error('API密钥未配置。请确保已设置有效的API密钥');
+    }
+    
     const response = await fetchWithTimeout(
       apiConfig.apiUrl,
       {
