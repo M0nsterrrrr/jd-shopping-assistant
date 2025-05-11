@@ -1,65 +1,45 @@
-// ========== API配置 ==========
-import { getConfig } from '../config.js';
-import { sendChatMessage, setApiConfig } from '../utils/api.js';
+// ========== 弹出窗口主脚本 ==========
+import { sendChatMessage, initApiConfig, setApiConfig, getApiConfig } from '../utils/api.js';
 
-// 在初始化完成前使用临时配置
-const DEFAULT_CONFIG = {
-  apiUrl: 'https://openrouter.ai/api/v1/chat/completions',
-  model: 'qwen/qwen3-30b-a3b:free',
-  apiKey: '', // 初始为空，将从.env文件中加载
-  timeout: 20000,
-  headers: {
-    'Content-Type': 'application/json',
-    'X-Title': 'JD-Shopping-Assistant'
+// 初始化
+document.addEventListener('DOMContentLoaded', async () => {
+  console.log('DOM ContentLoaded 事件触发');
+  
+  // 初始化API配置
+  await initApiConfig();
+  
+  // 确保容器可见
+  const container = document.querySelector('.container');
+  if (container) {
+    container.style.display = 'flex';
+    container.style.visibility = 'visible';
   }
-};
-
-// 存储API配置
-let apiConfig = { ...DEFAULT_CONFIG };
-
-// 初始化配置
-const initConfig = async () => {
-  try {
-    const config = await getConfig();
-    apiConfig = { ...config };
-    // 更新utils/api.js中的配置
-    setApiConfig(apiConfig);
-    console.log('配置已从.env文件加载');
-  } catch (error) {
-    console.error('加载配置失败:', error);
-  }
-};
-
-// 确保配置加载完成
-initConfig();
-
-/**
- * 带超时的fetch
- * @param {string} url - 请求URL
- * @param {Object} options - fetch选项
- * @param {number} timeout - 超时时间(ms)
- * @returns {Promise} fetch响应
- */
-const fetchWithTimeout = (url, options, timeout) => {
-  // 确保headers包含认证信息
-  const requestHeaders = {
-    ...apiConfig.headers,
-    ...(options.headers || {}),
-    'Authorization': `Bearer ${apiConfig.apiKey}`
+  
+  // 获取所有DOM元素
+  const elements = {
+    statusIndicator: document.getElementById('statusIndicator'),
+    statusText: document.getElementById('statusText'),
+    productInfo: document.getElementById('productInfo'),
+    priceChart: document.getElementById('priceChart'),
+    priceSummary: document.getElementById('priceSummary'),
+    reviewScore: document.getElementById('reviewScore'),
+    reviewSummary: document.getElementById('reviewSummary'),
+    sellerScore: document.getElementById('sellerScore'),
+    sellerSummary: document.getElementById('sellerSummary'),
+    alternativeProducts: document.getElementById('alternativeProducts'),
+    sourceButton: document.getElementById('sourceButton'),
+    updateTime: document.getElementById('updateTime'),
+    chatHistory: document.getElementById('chatHistory'),
+    chatInput: document.getElementById('chatInput'),
+    chatSendBtn: document.getElementById('chatSendBtn')
   };
 
-  const fetchOptions = {
-    ...options,
-    headers: requestHeaders
-  };
+  // 初始化界面
+  initializeUI(elements);
 
-  return Promise.race([
-    fetch(url, fetchOptions),
-    new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('请求超时')), timeout)
-    )
-  ]);
-};
+  // 加载当前标签页数据
+  loadCurrentTabData(elements);
+});
 
 // 初始化 UI 函数
 const initializeUI = (elements) => {
@@ -80,6 +60,18 @@ const initializeUI = (elements) => {
   }
 
   // 设置聊天功能
+  initializeChatFeature(elements);
+  
+  // 设置溯源按钮事件
+  if (elements.sourceButton) {
+    elements.sourceButton.addEventListener('click', () => {
+      handleOpenSourceDialog();
+    });
+  }
+};
+
+// 初始化聊天功能
+const initializeChatFeature = (elements) => {
   if (elements.chatInput && elements.chatSendBtn && elements.chatHistory) {
     console.log('正在设置聊天功能...');
     
@@ -126,6 +118,40 @@ const initializeUI = (elements) => {
   }
 };
 
+// 加载当前标签页数据
+const loadCurrentTabData = async (elements) => {
+  try {
+    // 获取当前标签页
+    const tab = await getCurrentTab();
+    if (!tab) {
+      updateStatus(elements, false);
+      if (elements.productInfo) {
+        elements.productInfo.innerHTML = '<p>无法获取当前标签页信息</p>';
+      }
+      return;
+    }
+
+    // 检查是否在京东商品页面
+    const isJdProductPage = tab.url && tab.url.includes('jd.com/item');
+    if (!isJdProductPage) {
+      updateStatus(elements, false);
+      if (elements.productInfo) {
+        elements.productInfo.innerHTML = '<p>请访问京东商品页面以获取分析</p>';
+      }
+      return;
+    }
+
+    // 从背景脚本获取数据
+    requestProductData(tab.id, elements);
+  } catch (error) {
+    console.error('加载标签页数据出错:', error);
+    updateStatus(elements, false);
+    if (elements.productInfo) {
+      elements.productInfo.innerHTML = `<p style="color: #ff4d4f;">加载数据失败: ${error.message}</p>`;
+    }
+  }
+};
+
 // 获取当前标签页信息
 const getCurrentTab = async () => {
   try {
@@ -138,117 +164,52 @@ const getCurrentTab = async () => {
   }
 };
 
-// 等待 DOM 完全加载
-window.addEventListener('DOMContentLoaded', () => {
-  console.log('DOM ContentLoaded 事件触发');
-  
-  // 确保容器可见
-  const container = document.querySelector('.container');
-  if (container) {
-    container.style.display = 'flex';
-    container.style.visibility = 'visible';
-  }
-  
-  // 延迟一点执行初始化
-  setTimeout(async () => {
-    try {
-      console.log('开始获取DOM元素');
+// 请求商品数据
+const requestProductData = (tabId, elements) => {
+  chrome.runtime.sendMessage({ action: 'getProductData', tabId }, (response) => {
+    if (response && response.success && response.data) {
+      const { product, priceData, reviewData, sellerData, alternatives, timestamp } = response.data;
       
-      // 获取所有需要的 DOM 元素
-      const elements = {
-        statusIndicator: document.getElementById('statusIndicator'),
-        statusText: document.getElementById('statusText'),
-        productInfo: document.getElementById('productInfo'),
-        priceChart: document.getElementById('priceChart'),
-        priceSummary: document.getElementById('priceSummary'),
-        reviewScore: document.getElementById('reviewScore'),
-        reviewSummary: document.getElementById('reviewSummary'),
-        sellerScore: document.getElementById('sellerScore'),
-        sellerSummary: document.getElementById('sellerSummary'),
-        alternativeProducts: document.getElementById('alternativeProducts'),
-        sourceButton: document.getElementById('sourceButton'),
-        updateTime: document.getElementById('updateTime'),
-        chatHistory: document.getElementById('chatHistory'),
-        chatInput: document.getElementById('chatInput'),
-        chatSendBtn: document.getElementById('chatSendBtn')
-      };
-
-      // 检查DOM元素是否正确获取
-      console.log('DOM 元素状态:', elements);
-
-      // 初始化界面
-      initializeUI(elements);
-
-      // 更新状态函数
-      const updateStatus = (isOnline) => {
-        if (elements.statusIndicator) {
-          elements.statusIndicator.className = `status-indicator ${isOnline ? 'online' : 'offline'}`;
-        }
-        if (elements.statusText) {
-          elements.statusText.textContent = isOnline ? '已连接' : '离线模式';
-        }
-      };
-
-      // 获取当前标签页
-      const tab = await getCurrentTab();
-      if (!tab) {
-        updateStatus(false);
-        if (elements.productInfo) {
-          elements.productInfo.innerHTML = '<p>无法获取当前标签页信息</p>';
-        }
-        return;
+      if (elements.productInfo && product) {
+        displayProductInfo(product);
       }
-
-      // 检查是否在京东商品页面
-      const isJdProductPage = tab.url && tab.url.includes('jd.com/item');
-      if (!isJdProductPage) {
-        updateStatus(false);
-        if (elements.productInfo) {
-          elements.productInfo.innerHTML = '<p>请访问京东商品页面以获取分析</p>';
-        }
-        return;
+      if (elements.priceSummary && priceData) {
+        displayPriceAnalysis(priceData);
       }
-
-      // 从背景脚本获取数据
-      chrome.runtime.sendMessage({ action: 'getProductData', tabId: tab.id }, (response) => {
-        if (response && response.success && response.data) {
-          const { product, priceData, reviewData, sellerData, alternatives, timestamp } = response.data;
-          
-          if (elements.productInfo && product) {
-            displayProductInfo(product);
-          }
-          if (elements.priceSummary && priceData) {
-            displayPriceAnalysis(priceData);
-          }
-          if (elements.reviewScore && reviewData) {
-            displayReviewAnalysis(reviewData);
-          }
-          if (elements.sellerScore && sellerData) {
-            displaySellerAnalysis(sellerData);
-          }
-          if (elements.alternativeProducts && alternatives) {
-            displayAlternatives(alternatives);
-          }
-          
-          updateStatus(true);
-        } else {
-          updateStatus(false);
-          if (elements.productInfo) {
-            elements.productInfo.innerHTML = '<p>数据加载失败，请刷新页面重试</p>';
-          }
-        }
-      });
-
-    } catch (error) {
-      console.error('初始化出错:', error);
-      // 显示错误信息
-      const productInfo = document.getElementById('productInfo');
-      if (productInfo) {
-        productInfo.innerHTML = `<p style="color: #ff4d4f;">初始化失败: ${error.message}</p>`;
+      if (elements.reviewScore && reviewData) {
+        displayReviewAnalysis(reviewData);
+      }
+      if (elements.sellerScore && sellerData) {
+        displaySellerAnalysis(sellerData);
+      }
+      if (elements.alternativeProducts && alternatives) {
+        displayAlternatives(alternatives);
+      }
+      
+      updateStatus(elements, true);
+    } else {
+      updateStatus(elements, false);
+      if (elements.productInfo) {
+        elements.productInfo.innerHTML = '<p>数据加载失败，请刷新页面重试</p>';
       }
     }
-  }, 100); // 延迟 100ms 执行
-});
+  });
+};
+
+// 更新状态函数
+const updateStatus = (elements, isOnline) => {
+  if (elements.statusIndicator) {
+    elements.statusIndicator.className = `status-indicator ${isOnline ? 'online' : 'offline'}`;
+  }
+  if (elements.statusText) {
+    elements.statusText.textContent = isOnline ? '已连接' : '离线模式';
+  }
+};
+
+// 打开溯源窗口
+const handleOpenSourceDialog = async () => {
+  chrome.runtime.sendMessage({ action: 'openSourceDialog' });
+};
 
 // 显示产品信息
 const displayProductInfo = (product) => {
@@ -340,25 +301,4 @@ const displayAlternatives = (alternatives) => {
       <div class="alt-product-price">￥${item.price}</div>
     </div>
   `).join('');
-};
-
-// 打开溯源窗口
-const openSourceDialog = (analysisData) => {
-  chrome.windows.create({
-    url: chrome.runtime.getURL('source/source.html'),
-    type: 'popup',
-    width: 800,
-    height: 600
-  });
-};
-
-// 设置溯源按钮事件
-document.getElementById('sourceButton').addEventListener('click', () => {
-  chrome.runtime.sendMessage({ action: 'getAnalysisSource', tabId: tab.id }, (response) => {
-    if (response.success && response.data) {
-      openSourceDialog(response.data);
-    } else {
-      alert('无法获取决策溯源数据');
-    }
-  });
-}); 
+}; 

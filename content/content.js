@@ -1,9 +1,15 @@
+/**
+ * 京东智能购物助手 - 内容脚本
+ * 负责在京东商品页面提取数据、注入UI元素并与背景脚本通信
+ */
+
 // 在 content.js 文件的最开头
 console.log('[JD Assistant] content.js loaded');
 
-
 // 全局变量存储商品数据
 let productData = null;
+
+// ========== 数据提取功能 ==========
 
 // 从页面提取商品ID
 const extractProductId = () => {
@@ -108,7 +114,9 @@ const extractSellerInfo = () => {
   };
 };
 
-// 修改 createAnalysisPanel 函数
+// ========== UI 交互功能 ==========
+
+// 创建分析面板
 const createAnalysisPanel = () => {
   console.log('[JD Assistant] createAnalysisPanel called');
   const panelContainer = document.createElement('div');
@@ -126,11 +134,9 @@ const createAnalysisPanel = () => {
         <p>正在分析商品数据...</p>
       </div>
     </div>
-    <div id="jd-assistant-chat-section" class="assistant-section" style="background: lightgreen; border: 2px solid red;"> {/* 添加临时内联样式 */}
-      <h3>智能对话 (测试)</h3>
-      <div id="chat-messages-container" style="border: 1px solid blue;">
-         <div class="chat-message bot-message">临时机器人消息</div>
-         <div class="chat-message user-message">临时用户消息</div>
+    <div id="jd-assistant-chat-section" class="assistant-section">
+      <h3>智能对话</h3>
+      <div id="chat-messages-container">
       </div>
       <div id="chat-input-container">
         <textarea id="chat-input" placeholder="在此输入您的问题..."></textarea>
@@ -148,7 +154,7 @@ const createAnalysisPanel = () => {
     panelContainer.classList.add('panel-hidden');
   });
 
-  initChatFeatures(panelContainer); // initChatFeatures 应该在 panelContainer 完全构建后调用
+  initChatFeatures(panelContainer);
   
   return panelContainer;
 };
@@ -340,6 +346,8 @@ const addFloatingButton = () => {
   document.body.appendChild(button);
 };
 
+// ========== 主功能和消息处理 ==========
+
 // 分析商品，发送数据到后台
 const analyzeProduct = async () => {
   try {
@@ -388,7 +396,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// 当页面加载完成后开始分析
+// 当页面加载完成后初始化
 window.addEventListener('load', () => {
   console.log('京东智能购物助手已加载');
   

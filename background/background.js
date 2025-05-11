@@ -4,35 +4,33 @@
  */
 
 // 导入API模块
-import { analyzeProduct, getAnalysisSource, setApiConfig } from '../utils/api.js';
-import { sendChatMessage } from '../utils/api.js';
-import { getConfig } from '../config.js';
+import { analyzeProduct, getAnalysisSource, initApiConfig, setApiConfig, sendChatMessage } from '../utils/api.js';
 
 // 存储商品分析数据的缓存
 const productCache = new Map();
 
-// 初始化配置
+// 初始化扩展程序
 const initializeExtension = async () => {
   console.log('京东智能购物助手 - 正在初始化...');
   
   try {
-    // 从.env文件加载配置
-    const config = await getConfig();
-    setApiConfig(config);
-    console.log('已从.env文件加载API配置');
-  } catch (error) {
-    console.error('从.env加载API配置失败:', error);
+    // 初始化API配置
+    const success = await initApiConfig();
     
-    // 如果.env加载失败，尝试从storage中加载
-    try {
-      const { apiConfig } = await chrome.storage.local.get('apiConfig');
-      if (apiConfig) {
-        setApiConfig(apiConfig);
-        console.log('已从storage加载API配置');
+    if (!success) {
+      // 如果.env加载失败，尝试从storage中加载
+      try {
+        const { apiConfig } = await chrome.storage.local.get('apiConfig');
+        if (apiConfig) {
+          setApiConfig(apiConfig);
+          console.log('已从storage加载API配置');
+        }
+      } catch (storageError) {
+        console.error('从storage加载API配置失败:', storageError);
       }
-    } catch (storageError) {
-      console.error('从storage加载API配置失败:', storageError);
     }
+  } catch (error) {
+    console.error('初始化API配置失败:', error);
   }
   
   // 显示欢迎通知
@@ -183,13 +181,32 @@ const handleGetAnalysisSource = async (tabId, sendResponse) => {
 };
 
 // 打开溯源窗口
-const handleOpenSourceDialog = () => {
+const handleOpenSourceDialog = (sendResponse) => {
   chrome.windows.create({
     url: chrome.runtime.getURL('source/source.html'),
     type: 'popup',
     width: 800,
     height: 600
   });
+  
+  if (sendResponse) {
+    sendResponse({ success: true });
+  }
+};
+
+// 处理聊天消息
+const handleChatMessage = async (message, sendResponse) => {
+  try {
+    const response = await sendChatMessage(message);
+    sendResponse(response);
+  } catch (error) {
+    console.error('处理聊天消息失败:', error);
+    sendResponse({
+      success: false,
+      error: error.message || '处理消息时出错',
+      answer: '抱歉，处理消息时出现错误。'
+    });
+  }
 };
 
 // 保存API配置
@@ -219,27 +236,13 @@ const handleSaveApiConfig = async (config, sendResponse) => {
 
 // 监听来自内容脚本和弹出窗口的消息
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  // 处理聊天消息
-  if (message.action === 'sendChatMessage') {
-    // 处理聊天消息
-    sendChatMessage(message.message)
-      .then(response => {
-        sendResponse(response);
-      })
-      .catch(error => {
-        console.error('处理聊天消息失败:', error);
-        sendResponse({
-          success: false,
-          error: error.message,
-          answer: '抱歉，处理消息时出现错误。'
-        });
-      });
-    return true; // 保持消息通道开放以进行异步响应
-  }
-
   console.log('收到消息:', message.action);
   
   switch (message.action) {
+    case 'sendChatMessage':
+      handleChatMessage(message.message, sendResponse);
+      return true; // 异步响应
+      
     case 'analyzeProduct':
       handleAnalyzeProduct(message.data, sendResponse);
       return true; // 异步响应
@@ -251,9 +254,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return handleGetAnalysisSource(message.tabId, sendResponse);
       
     case 'openSourceDialog':
-      handleOpenSourceDialog();
-      sendResponse({ success: true });
-      break;
+      handleOpenSourceDialog(sendResponse);
+      return true; // 异步响应
       
     case 'saveApiConfig':
       handleSaveApiConfig(message.config, sendResponse);

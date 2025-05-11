@@ -1,13 +1,14 @@
 /**
- * API通信模块 - 与Dify导出的OpenAI格式API交互
+ * API通信模块 - 与OpenAI格式API交互
  */
+import { getConfig } from '../config.js';
 
 // 默认API配置
 const DEFAULT_CONFIG = {
-  apiUrl: 'https://openrouter.ai/api/v1/chat/completions', // 替换为实际的API地址
+  apiUrl: 'https://openrouter.ai/api/v1/chat/completions',
   model: 'qwen/qwen3-4b:free',
   apiKey: '', // 初始为空，将从.env文件中加载
-  timeout: 20000, // 20秒超时
+  timeout: 20000,
   headers: {
     'Content-Type': 'application/json',
     'X-Title': 'JD-Shopping-Assistant'
@@ -18,11 +19,63 @@ const DEFAULT_CONFIG = {
 let apiConfig = { ...DEFAULT_CONFIG };
 
 /**
+ * 初始化API配置
+ * 从.env文件或其他来源加载配置
+ */
+export const initApiConfig = async () => {
+  try {
+    const config = await getConfig();
+    setApiConfig(config);
+    console.log('API配置已从.env文件加载');
+    return true;
+  } catch (error) {
+    console.error('加载API配置失败:', error);
+    return false;
+  }
+};
+
+/**
  * 设置API配置
  * @param {Object} config - API配置对象
  */
 export const setApiConfig = (config) => {
   apiConfig = { ...apiConfig, ...config };
+};
+
+/**
+ * 获取当前API配置
+ * @returns {Object} 当前API配置
+ */
+export const getApiConfig = () => {
+  return { ...apiConfig };
+};
+
+/**
+ * 带超时的fetch
+ * @param {string} url - 请求URL
+ * @param {Object} options - fetch选项
+ * @param {number} timeout - 超时时间(ms)
+ * @returns {Promise} fetch响应
+ */
+const fetchWithTimeout = (url, options, timeout) => {
+  // 确保headers包含认证信息
+  const requestHeaders = {
+    ...apiConfig.headers,
+    ...(options.headers || {}),
+    'Authorization': `Bearer ${apiConfig.apiKey}`
+  };
+
+  const fetchOptions = {
+    ...options,
+    headers: requestHeaders
+  };
+
+  return Promise.race([
+    fetch(url, fetchOptions),
+    new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('请求超时')), timeout)
+    )
+  ]);
 };
 
 /**
@@ -32,9 +85,14 @@ export const setApiConfig = (config) => {
  */
 export const analyzeProduct = async (productData) => {
   try {
+    // 如果API密钥为空，报告错误
+    if (!apiConfig.apiKey) {
+      throw new Error('API密钥未配置。请确保已设置有效的API密钥');
+    }
+
     const { product, review, seller } = productData;
     
-    // 发送请求到Dify Agent API
+    // 发送请求到API
     const response = await fetchWithTimeout(
       apiConfig.apiUrl,
       {
@@ -91,6 +149,11 @@ export const analyzeProduct = async (productData) => {
  */
 export const getAnalysisSource = async (productId) => {
   try {
+    // 如果API密钥为空，报告错误
+    if (!apiConfig.apiKey) {
+      throw new Error('API密钥未配置。请确保已设置有效的API密钥');
+    }
+    
     const response = await fetchWithTimeout(
       apiConfig.apiUrl,
       {
@@ -341,36 +404,73 @@ const extractDataFromText = (text) => {
   return result;
 };
 
-/**
- * 带超时的fetch
- * @param {string} url - 请求URL
- * @param {Object} options - fetch选项
- * @param {number} timeout - 超时时间(ms)
- * @returns {Promise} fetch响应
- */
-const fetchWithTimeout = (url, options, timeout) => {
-  // 确保headers包含认证信息
-  const requestHeaders = {
-    ...apiConfig.headers,
-    ...(options.headers || {}),
-    'Authorization': `Bearer ${apiConfig.apiKey}` // 正确地使用apiConfig.apiKey
-  };
-
-  const fetchOptions = {
-    ...options,
-    headers: requestHeaders
-  };
-
-  return Promise.race([
-    fetch(url, fetchOptions),
-    new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('请求超时')), timeout)
-    )
-  ]);
+// 解析API响应的基本函数（兼容性函数）
+const parseApiResponse = (data) => {
+  if (data && data.choices && data.choices[0] && data.choices[0].message) {
+    return { text: data.choices[0].message.content };
+  }
+  return data;
 };
 
+class APIClient {
+  constructor() {
+    this.config = null;
+    this.initializeConfig();
+  }
+
+  async initializeConfig() {
+    this.config = await getConfig();
+  }
+
+  async sendChatMessage(messages) {
+    if (!this.config) {
+      await this.initializeConfig();
+    }
+
+    const requestBody = {
+      messages,
+      model: this.config.model,
+      temperature: 0.7,
+      max_tokens: 1000,
+    };
+
+    try {
+      const response = await fetch(this.config.apiUrl, {
+        method: 'POST',
+        headers: this.config.headers,
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        throw new Error(`API请求失败: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('API调用错误:', error);
+      throw error;
+    }
+  }
+
+  // 切换模型
+  async switchModel(modelKey) {
+    if (!this.config) {
+      await this.initializeConfig();
+    }
+    
+    const newModel = this.config.availableModels.ALTERNATIVES[modelKey] || this.config.availableModels.DEFAULT;
+    this.config.model = newModel;
+    console.log(`已切换到模型: ${newModel}`);
+  }
+}
+
+export const apiClient = new APIClient();
+
 export default {
+  initApiConfig,
   setApiConfig,
+  getApiConfig,
   analyzeProduct,
   getAnalysisSource,
   sendChatMessage

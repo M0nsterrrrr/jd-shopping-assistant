@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "京东智能购物助手",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "为京东平台用户提供去中心化、透明化的智能导购服务",
   "permissions": [
     "activeTab",
